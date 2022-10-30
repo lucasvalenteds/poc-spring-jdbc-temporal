@@ -4,6 +4,8 @@ import com.example.instant.Customer;
 import com.example.instant.CustomerRepository;
 import com.example.offset.Account;
 import com.example.offset.AccountRepository;
+import com.example.zoned.Vehicle;
+import com.example.zoned.VehicleRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +19,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -79,5 +82,35 @@ class ApplicationTest {
         assertNotNull(accountSaved.getId(), "Database should generate ID for new aggregates");
         assertEquals(account.getBalance(), accountSaved.getBalance());
         assertEquals("2022-10-30T00:01:41.372759Z", accountSaved.getCreatedAt().toString());
+    }
+
+    @Test
+    void momentZonedUtc(@Autowired VehicleRepository vehicleRepository) {
+        final var vehicle = new Vehicle();
+        vehicle.setCategory("Motorcycle");
+        vehicle.setCreatedAt(ZonedDateTime.parse("2022-10-30T00:05:36.286725037Z"));
+        vehicleRepository.save(vehicle);
+
+        final var vehicleSaved = vehicleRepository.findById(vehicle.getId())
+                .orElseThrow();
+
+        assertNotNull(vehicleSaved.getId(), "Database should generate ID for new aggregates");
+        assertEquals(vehicle.getCategory(), vehicleSaved.getCategory());
+        assertEquals("2022-10-30T00:05:36.286725Z", vehicleSaved.getCreatedAt().toString());
+    }
+
+    @Test
+    void momentZonedUtcBrazil(@Autowired VehicleRepository vehicleRepository) {
+        final var vehicle = new Vehicle();
+        vehicle.setCategory("Motorcycle");
+        vehicle.setCreatedAt(ZonedDateTime.parse("2022-10-29T20:55:07.375779966-03:00[America/Sao_Paulo]"));
+        vehicleRepository.save(vehicle);
+
+        final var vehicleSaved = vehicleRepository.findById(vehicle.getId())
+                .orElseThrow();
+
+        assertNotNull(vehicleSaved.getId(), "Database should generate ID for new aggregates");
+        assertEquals(vehicle.getCategory(), vehicleSaved.getCategory());
+        assertEquals("2022-10-29T23:55:07.375780Z", vehicleSaved.getCreatedAt().toString());
     }
 }
