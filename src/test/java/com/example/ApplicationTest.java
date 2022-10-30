@@ -2,6 +2,8 @@ package com.example;
 
 import com.example.instant.Customer;
 import com.example.instant.CustomerRepository;
+import com.example.offset.Account;
+import com.example.offset.AccountRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +14,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -45,5 +49,35 @@ class ApplicationTest {
         assertNotNull(customerSaved.getId(), "Database should generate ID for new aggregates");
         assertEquals(customer.getName(), customerSaved.getName());
         assertEquals("2022-10-29T22:52:33.205184Z", customerSaved.getCreatedAt().toString());
+    }
+
+    @Test
+    void momentOffsetUtc(@Autowired AccountRepository accountRepository) {
+        final var account = new Account();
+        account.setBalance(new BigDecimal("750.00"));
+        account.setCreatedAt(OffsetDateTime.parse("2022-10-30T00:03:50.785061364Z"));
+        accountRepository.save(account);
+
+        final var accountSaved = accountRepository.findById(account.getId())
+                .orElseThrow();
+
+        assertNotNull(accountSaved.getId(), "Database should generate ID for new aggregates");
+        assertEquals(account.getBalance(), accountSaved.getBalance());
+        assertEquals("2022-10-30T00:03:50.785061Z", accountSaved.getCreatedAt().toString());
+    }
+
+    @Test
+    void momentOffsetUtcBrazil(@Autowired AccountRepository accountRepository) {
+        final var account = new Account();
+        account.setBalance(new BigDecimal("750.00"));
+        account.setCreatedAt(OffsetDateTime.parse("2022-10-29T21:01:41.372759031-03:00"));
+        accountRepository.save(account);
+
+        final var accountSaved = accountRepository.findById(account.getId())
+                .orElseThrow();
+
+        assertNotNull(accountSaved.getId(), "Database should generate ID for new aggregates");
+        assertEquals(account.getBalance(), accountSaved.getBalance());
+        assertEquals("2022-10-30T00:01:41.372759Z", accountSaved.getCreatedAt().toString());
     }
 }
